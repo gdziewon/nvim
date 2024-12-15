@@ -2,205 +2,101 @@ local M = {}
 
 -- List of LSP servers with their configurations
 M.list = {
-  -- **C/C++ Language Server**
+  -- C/C++
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--completion-style=detailed', '--header-insertion=never' },
-    -- Additional settings can be added here
-    -- For example, you can specify the root directory or custom on_attach function
   },
-
-  -- **Python Language Server**
+  -- Python
   pyright = {
     settings = {
       python = {
         analysis = {
           autoSearchPaths = true,
           useLibraryCodeForTypes = true,
-          diagnosticMode = 'workspace', -- Options: 'openFilesOnly', 'workspace'
-          typeCheckingMode = 'strict', -- Options: 'off', 'basic', 'strict'
+          diagnosticMode = 'workspace',
+          typeCheckingMode = 'off',
         },
       },
     },
   },
-
-  -- **Rust Analyzer**
+  -- Rust
   rust_analyzer = {
     settings = {
       ['rust-analyzer'] = {
-        assist = {
-          importGranularity = 'module',
-          importPrefix = 'by_self',
-        },
-        cargo = {
-          loadOutDirsFromCheck = true,
-          allFeatures = true,
-        },
-        checkOnSave = {
-          command = 'clippy',
-        },
-        procMacro = {
-          enable = true,
-        },
+        assist = { importGranularity = 'module', importPrefix = 'by_self' },
+        cargo = { loadOutDirsFromCheck = true, allFeatures = true },
+        checkOnSave = { command = 'clippy' },
+        procMacro = { enable = true },
         diagnostics = {
           enable = true,
           disabled = { 'unresolved-proc-macro' },
           enableExperimental = true,
         },
         inlayHints = {
-          lifetimeElisionHints = {
-            enable = 'always', -- Options: 'off', 'never', 'always'
-            useParameterNames = true,
-          },
-          bindingModeHints = {
-            enable = true,
-          },
-          closureReturnTypeHints = {
-            enable = true,
-          },
-          typeHints = {
-            enable = true,
-            hideClosureInitialization = false,
-            hideNamedConstructor = false,
-          },
-          parameterHints = {
-            enable = true,
-          },
-          chainingHints = {
-            enable = true,
-          },
-          reborrowHints = {
-            enable = 'always', -- Options: 'off', 'never', 'always'
-          },
+          lifetimeElisionHints = { enable = 'always', useParameterNames = true },
+          bindingModeHints = { enable = true },
+          closureReturnTypeHints = { enable = true },
+          typeHints = { enable = true },
+          parameterHints = { enable = true },
+          chainingHints = { enable = true },
+          reborrowHints = { enable = 'always' },
         },
       },
     },
   },
-
-  -- **Lua Language Server**
+  -- Lua
   lua_ls = {
     settings = {
       Lua = {
-        runtime = {
-          -- Tell the language server which version of Lua you're using
-          version = 'LuaJIT',
-          path = vim.split(package.path, ';'),
-        },
-        completion = {
-          callSnippet = 'Replace',
-          keywordSnippet = 'Replace',
-        },
-        diagnostics = {
-          -- Get the language server to recognize the `vim` global
-          globals = { 'vim' },
-          disable = { 'lowercase-global' },
-        },
-        workspace = {
-          -- Make the server aware of Neovim runtime files
-          library = vim.api.nvim_get_runtime_file('', true),
-          checkThirdParty = false, -- Prevent prompt for third-party library
-        },
-        telemetry = {
-          enable = false,
-        },
+        runtime = { version = 'LuaJIT', path = vim.split(package.path, ';') },
+        completion = { callSnippet = 'Replace', keywordSnippet = 'Replace' },
+        diagnostics = { globals = { 'vim' }, disable = { 'lowercase-global' } },
+        workspace = { library = vim.api.nvim_get_runtime_file('', true), checkThirdParty = false },
+        telemetry = { enable = false },
       },
     },
+    on_attach = function(client, _)
+      client.server_capabilities.documentFormattingProvider = false
+    end,
   },
-
-  -- **Go Language Server**
+  -- Go
   gopls = {
     settings = {
       gopls = {
-        analyses = {
-          unusedparams = true,
-          shadow = true,
-        },
+        analyses = { unusedparams = true, shadow = true },
         staticcheck = true,
         gofumpt = true,
       },
     },
   },
-
-  -- **HTML Language Server**
-  html = {
-    filetypes = { 'html', 'htmldjango' },
-  },
-
-  -- **CSS Language Server**
+  -- HTML
+  html = { filetypes = { 'html', 'htmldjango' } },
+  -- CSS
   cssls = {},
-
-  -- **JSON Language Server**
+  -- JSON
   jsonls = {
-    settings = {
-      json = {
-        schemas = require('schemastore').json.schemas(),
-        validate = { enable = true },
-      },
-    },
+    settings = { json = { schemas = require('schemastore').json.schemas(), validate = { enable = true } } },
   },
-
-  -- **YAML Language Server**
+  -- YAML
   yamlls = {
-    settings = {
-      yaml = {
-        schemas = require('schemastore').yaml.schemas(),
-        validate = true,
-        hover = true,
-        completion = true,
-      },
-    },
+    settings = { yaml = { schemas = require('schemastore').yaml.schemas(), validate = true, hover = true, completion = true } },
   },
-
-  -- **Bash Language Server**
+  -- Bash
   bashls = {},
-
-  -- **Dockerfile Language Server**
+  -- Docker
   dockerls = {},
-
-  -- **Markdown Language Server**
+  -- Markdown
   marksman = {},
 }
 
+-- Setup function for LSP servers
 function M.setup(capabilities)
   local lspconfig = require 'lspconfig'
 
-  -- Customize the 'on_attach' function for specific servers if needed
-  -- Example: Disable formatting for tsserver and use null-ls instead
-  if M.list.tsserver then
-    M.list.tsserver.on_attach = function(client, bufnr)
-      client.server_capabilities.documentFormattingProvider = false
-      -- Additional customizations can be added here
-    end
+  for server_name, config in pairs(M.list) do
+    config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+    lspconfig[server_name].setup(config)
   end
-
-  -- Customize 'on_attach' for Lua LS
-  if M.list.lua_ls then
-    M.list.lua_ls.on_attach = function(client, bufnr)
-      -- Disable formatting if using an external formatter
-      client.server_capabilities.documentFormattingProvider = false
-    end
-  end
-
-  -- Setup JSON Language Server with schemastore
-  if M.list.jsonls then
-    local jsonls_opts = M.list.jsonls
-    local schemastore = require 'schemastore'
-    jsonls_opts.settings.json.schemas = schemastore.json.schemas()
-    jsonls_opts.capabilities = capabilities
-    lspconfig.jsonls.setup(jsonls_opts)
-    M.list.jsonls = nil -- Remove from the list to avoid duplicate setup
-  end
-
-  -- Setup YAML Language Server with schemastore
-  if M.list.yamlls then
-    local yamlls_opts = M.list.yamlls
-    local schemastore = require 'schemastore'
-    yamlls_opts.settings.yaml.schemas = schemastore.yaml.schemas()
-    yamlls_opts.capabilities = capabilities
-    lspconfig.yamlls.setup(yamlls_opts)
-    M.list.yamlls = nil -- Remove from the list to avoid duplicate setup
-  end
-
-  -- Additional setup for other servers can be added here
 end
 
 return M

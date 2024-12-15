@@ -1,8 +1,14 @@
 -- General settings
 
+-- Set a max length at a specific column
+vim.opt.textwidth = 100
+
 -- Set <space> as the leader key
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+
+-- Support for colors in tmux
+vim.opt.termguicolors = true
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
@@ -21,7 +27,7 @@ vim.opt.showmode = false
 
 -- Sync clipboard between OS and Neovim.
 vim.schedule(function()
-  vim.opt.clipboard = 'unnamedplus'
+  vim.opt.clipboard:append 'unnamedplus'
 end)
 
 -- Enable break indent

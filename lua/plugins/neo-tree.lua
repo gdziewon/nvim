@@ -15,7 +15,6 @@ return {
       follow_current_file = {
         enabled = true, -- Ensure this is now a table with 'enabled' key
         leave_dirs_open = false, -- Option to leave directories open when following files
-        change_cwd_on_change = true,
       },
       window = {
         mappings = {

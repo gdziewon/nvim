@@ -30,13 +30,13 @@ return {
       end,
       formatters_by_ft = { -- Formatters
         lua = { 'stylua' },
-        python = { 'isort', 'black', stop_after_first = true },
+        python = { 'isort', 'black' },
         rust = { 'rustfmt' },
         bash = { 'shfmt' },
         c = { 'clang_format' },
         cpp = { 'clang_format' },
-        lalrpop = { 'prettier' },
       },
+      stop_after_first = { python = true }, -- Only the first formatter for Python (i.e., isort)
     },
   },
 }

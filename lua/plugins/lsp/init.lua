@@ -5,7 +5,6 @@ return {
     ft = 'lua',
     opts = {
       library = {
-        -- Load luvit types when the vim.uv word is found
         { path = 'luvit-meta/library', words = { 'vim%.uv' } },
       },
     },
@@ -30,35 +29,36 @@ return {
       },
     },
     config = function()
-      -- Require the keymaps and servers modules
+      -- Ensure Mason installs tools automatically
+      require('mason').setup()
+      require('mason-lspconfig').setup()
+
+      -- Load keymaps
       local keymaps = require 'plugins.lsp.keymaps'
+
+      -- Load LSP servers list after Mason setup
       local servers = require 'plugins.lsp.servers'
 
       -- Set up capabilities for nvim-cmp
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
-      -- Set up the LSP servers
+      -- Initialize LSP servers
       servers.setup(capabilities)
 
-      -- Create an autocommand group for LSP attachment
+      -- Create autocommand for attaching LSP keymaps
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('lsp-attach', { clear = true }),
         callback = function(event)
-          -- Get the LSP client
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          -- Attach keymaps
           keymaps.on_attach(client, event.buf)
         end,
       })
 
-      -- Ensure Mason installs tools automatically
-      require('mason').setup()
-
-      -- Ensure servers are installed
+      -- Ensure specific servers are installed
       local ensure_installed = vim.tbl_keys(servers.list)
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        'stylua',
         'rust-analyzer',
         'clangd',
         'pyright',
@@ -74,11 +74,11 @@ return {
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+      -- Set up Mason LSP config handlers after loading servers
       require('mason-lspconfig').setup {
         handlers = {
           function(server_name)
             local server = servers.list[server_name] or {}
-            -- This handles overriding only values explicitly passed
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
